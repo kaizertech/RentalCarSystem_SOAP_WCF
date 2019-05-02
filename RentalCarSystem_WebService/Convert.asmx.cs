@@ -43,110 +43,101 @@ namespace RentalCarSystem_WebService
         private IRepository<Companies> _companiesRepo;
         private IRepository<Transactions> _transactionRepo;
 
-        
 
-        public class Entitys
+        [WebMethod]
+        public bool InsertCustomer(Customers entity)
         {
-            private CustomerContext _dbContext;
-
-            private IUnitOfWork _uow;
-            private IRepository<Cars> _carsRepo;
-            private IRepository<Customers> _customersRepo;
-            private IRepository<Companies> _companiesRepo;
-            private IRepository<Transactions> _transactionRepo;
-
-            public void TestInitialize()
+            try
             {
-                _dbContext = new CustomerContext();
-
-                // EFBlogContext'i kullanıyor olduğumuz için EFUnitOfWork'den türeterek constructor'ına
-                // ilgili context'i constructor injection yöntemi ile inject ediyoruz.
-                _uow = new UnitOfWork(_dbContext);
-                _customersRepo = new Repository<Customers>(_dbContext);
-                _carsRepo = new Repository<Cars>(_dbContext);
-                _companiesRepo = new Repository<Companies>(_dbContext);
-                _transactionRepo = new Repository<Transactions>(_dbContext);
-            }
-
-            public void AddUser(string ad, string soyad)
-            {
-                Customers user = new Customers
+                using(var Insert = _uow )
                 {
-                    Musteri_Ad = ad.ToString(),
-                    Musteri_Soyad = soyad.ToString(),
-                    Musteri_TC = "584612925768",
-                    Musteri_KullaniciAdi = "qyusuf_dede",
-                    Musteri_Sifre = "123e"
-                };
-
-                _customersRepo.Add(user);
-                int process = _uow.SaveChanges();
-
-                //Assert.AreNotEqual(-1, process);
+                    _customersRepo = Insert.GetRepository<Customers>();
+                    _customersRepo.Add(entity);
+                    Insert.SaveChanges();
+                }
+                return true;
             }
-
-            public void AddUser1()
+            catch (Exception)
             {
-                Transactions tr = new Transactions
-                {
-                    Musteri_id =2,
-                    Ucret = 123,
-                    CreatedDate = DateTime.Now
 
-                };
-
-                _transactionRepo.Add(tr);
-                int process = _uow.SaveChanges();
-
-                //Assert.AreNotEqual(-1, process);
-            }
-
-            public void TestCleanup()
-            {
-                _dbContext = null;
-                _uow.Dispose();
-            }
-            public void GetUser()
-            {
-                Customers user = _customersRepo.GetById(1);
-
-               // Assert.IsNotNull(user);
-            }
-
-            public void DeleteUser(int ss)
-            {
-                Customers user = _customersRepo.GetById(ss);
-
-                _customersRepo.Delete(user);
-                int process = _uow.SaveChanges();
-
-                //Assert.AreNotEqual(-1, process);
-            }
-            public void UpdateUser(int ss)
-            {
-                Customers user = _customersRepo.GetById(ss);
-
-                user.Musteri_Ad = "Mehmet";
-
-                _customersRepo.Update(user);
-                int process = _uow.SaveChanges();
-
-                // Assert.AreNotEqual(-1, process);
+                return false;
             }
         }
 
-        Entitys en = new Entitys();
+        [WebMethod]
+        public bool DeleteCustomer(int id)
+        {
+            try
+            {
+                Customers user = _customersRepo.GetById(id);
+
+                _customersRepo.Delete(user);
+                _uow.SaveChanges();
+
+                return true;
+            }
+            catch (Exception)
+            {
+
+                return false;
+            }
+        }
+
+        
+        [WebMethod]
+        public Customers[] gets()
+        {
+            try
+            {
+                using (var List = _uow)
+                {
+                    _customersRepo = List.GetRepository<Customers>();
+                    return _customersRepo.GetAll().ToArray();
+                    
+                }
+                
+            }
+            catch (Exception)
+            {
+
+                throw;
+            }
+        }
 
         [WebMethod]
-        public string getAll()
+        public bool Updates(int id)
         {
+            try
+            {
+                using(var update = _uow)
+                {
+                    Customers user = _customersRepo.GetById(id);
+
+                    _customersRepo.Update(user);
+                    
+                    
+                }
+                return true;
+            }
+            catch (Exception)
+            {
+
+                return false;
+                
+            }
+        }
+
+
+       /* {
+
             string temp = "";
             Customers query = _customersRepo.GetAll().FirstOrDefault();
 
+            
             temp = query.ToString();
 
             return temp;
-        }
+        */
         
 
         
@@ -157,7 +148,7 @@ namespace RentalCarSystem_WebService
             
             foreach (Customers item in _customersRepo.GetAll())
             {
-                temp += item.Musteri_Ad+" -- "+item.Musteri_TC+"-- ";
+                temp += item;
             }
             return temp;
         }
