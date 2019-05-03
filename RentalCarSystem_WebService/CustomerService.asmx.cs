@@ -33,16 +33,38 @@ namespace RentalCarSystem_WebService
             _carsRepo = new Repository<Cars>(_dbContext);
             _companiesRepo = new Repository<Companies>(_dbContext);
             _transactionRepo = new Repository<Transactions>(_dbContext);
+
         }
 
-        private CustomerContext _dbContext;
+        public bool result = false;
 
+
+        private CustomerContext _dbContext;
         private IUnitOfWork _uow;
         private IRepository<Cars> _carsRepo;
         private IRepository<Customers> _customersRepo;
         private IRepository<Companies> _companiesRepo;
         private IRepository<Transactions> _transactionRepo;
 
+
+        [WebMethod]
+        public Customers CustomerFind(int ID)
+        {
+            try
+            {
+                using(var Fine = _uow)
+                {
+                    _customersRepo = Fine.GetRepository<Customers>();
+                    return _customersRepo.GetById(ID);
+                }
+                
+            }
+            catch (Exception)
+            {
+
+                throw;
+            }
+        }
 
         [WebMethod]
         public bool InsertCustomer(Customers entity)
@@ -85,7 +107,7 @@ namespace RentalCarSystem_WebService
 
         
         [WebMethod]
-        public Customers[] gets()
+        public Customers[] GetCustomer()
         {
             try
             {
@@ -126,80 +148,50 @@ namespace RentalCarSystem_WebService
                 
             }
         }
-
-
-       /* {
-
-            string temp = "";
-            Customers query = _customersRepo.GetAll().FirstOrDefault();
-
-            
-            temp = query.ToString();
-
-            return temp;
-        */
-        
-
-        
         [WebMethod]
-        public string LoadMembership()
+        public bool LoginCheck(string userName, string userPass)
         {
-            string temp = "";
+
+            string un, up;
             
-            foreach (Customers item in _customersRepo.GetAll())
+            try
             {
-                temp += item;
+                List<Customers> custom = new List<Customers>();
+                foreach (var item in GetCustomer().OrderBy(x => x.Musteri_ID).ToList())
+                {
+                    Customers castedCustomer = new Customers()
+                    {
+                        Musteri_KullaniciAdi = item.Musteri_KullaniciAdi,
+                        Musteri_Sifre = item.Musteri_Sifre
+
+                    };
+                    custom.Add(castedCustomer);
+                }
+                foreach (var items in custom)
+                {
+                    un = items.Musteri_KullaniciAdi;
+                    up = items.Musteri_Sifre;
+
+
+                    if (un == userName && up == userPass)
+                    {
+                        result = true;
+                        break;
+
+                    }
+
+                }
+
+
+                return result;
+
             }
-            return temp;
+            catch (Exception)
+            {
+
+                return false;
+            }
         }
-
-        [WebMethod]
-        public string GetUser()
-        {
-            string temp = "";
-            Customers user = _customersRepo.GetById(6);
-
-            temp += user.Musteri_ID+"\n"+user.Musteri_KullaniciAdi.ToString();
-
-            return temp;
-            // Assert.IsNotNull(user);
-        }
-
-
-
-        [WebMethod]
-         public void AddUser()
-            {
-                Cars cm = new Cars()
-                {   
-                    
-                    Sirket_id = 1,
-                    Araba_Ad ="Mercedes",
-                    Araba_Model ="CLK 2018",
-                    Araba_GunlukKira = 250,
-                    Araba_AirBag = true,
-                    Araba_BagajHacmi =31,
-                    Araba_GunlukKmSiniri = 24,
-                    Araba_KoltukSayisi = 5
-                   
-                };
-                
-               _carsRepo.Add(cm);
-                int process = _uow.SaveChanges();
-
-                //Assert.AreNotEqual(-1, process);
-            }
-
-        [WebMethod]
-         public void DeleteUser(int ss)
-            {
-                Customers user = _customersRepo.GetById(ss);
-
-                _customersRepo.Delete(user);
-                int process = _uow.SaveChanges();
-
-                //Assert.AreNotEqual(-1, process);
-            }
-        
+  
     }
 }
